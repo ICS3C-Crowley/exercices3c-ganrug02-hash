@@ -1,0 +1,80 @@
+import json
+import random
+from pathlib import Path
+
+HIGHSCORE_FILE = Path.cwd() / "highscore.json"
+
+
+def load_highscore():
+    if not HIGHSCORE_FILE.exists():
+        return None
+    try:
+        with HIGHSCORE_FILE.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("best_attempts")
+    except Exception:
+        return None
+
+
+def save_highscore(attempts):
+    try:
+        with HIGHSCORE_FILE.open("w", encoding="utf-8") as f:
+            json.dump({"best_attempts": attempts}, f)
+    except Exception:
+        pass
+
+
+def ask_int(prompt, min_v=None, max_v=None):
+    while True:
+        s = input(prompt).strip()
+        if not s:
+            print("Entrée vide — réessayer.")
+            continue
+        if not s.lstrip("-").isdigit():
+            print("Veuillez entrer un nombre entier.")
+            continue
+        v = int(s)
+        if (min_v is not None and v < min_v) or (max_v is not None and v > max_v):
+            print(f"Entrez un nombre entre {min_v} et {max_v}.")
+            continue
+        return v
+
+
+def play_round():
+    secret = random.randint(1, 100)
+    attempts = 0
+    print("\nJ'ai choisi un nombre entre 1 et 100. Devine-le !")
+    while True:
+        guess = ask_int("Ton essai : ", 1, 100)
+        attempts += 1
+        if guess < secret:
+            print("Trop petit.")
+        elif guess > secret:
+            print("Trop grand.")
+        else:
+            print(f"Bravo ! Tu as trouvé en {attempts} essais.")
+            return attempts
+
+
+def main():
+    print("=== Jeu : Devine le nombre ===")
+    best = load_highscore()
+    if best:
+        print(f"Meilleure partie : {best} essais")
+    else:
+        print("Aucune partie enregistrée.")
+
+    while True:
+        attempts = play_round()
+        if best is None or attempts < best:
+            print("Nouvelle meilleure partie !")
+            save_highscore(attempts)
+            best = attempts
+        choice = input("Rejouer ? (o/N) : ").strip().lower()
+        if choice != "o":
+            print("Au revoir.")
+            break
+
+
+if __name__ == "__main__":
+    main() 
